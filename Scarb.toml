@@ -1,0 +1,23 @@
+[package]
+name = "falcon512_account"
+version = "0.1.0"
+edition = "2024_07"
+cairo-version = "2.18.0"
+
+[dependencies]
+starknet = "2.18.0"
+corelib_imports = "0.1.2"
+
+[dev-dependencies]
+snforge_std = "0.59.0"
+assert_macros = "2.18.0"
+
+[[target.starknet-contract]]
+sierra = true
+casm = true
+
+[tool.scarb]
+allow-prebuilt-plugins = ["snforge_std"]
+
+[scripts]
+test = "snforge test"
