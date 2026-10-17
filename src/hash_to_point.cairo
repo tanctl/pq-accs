@@ -81,12 +81,19 @@ fn accept(word: W16, ref words: Array<u16>) {
     }
 }
 
+/// The word divisor 2^16 and the 64- and 128-bit byte-swap masks.
+type K = (NonZero<B16>, u128, u128);
+
+/// The u128 bitwise libfunc: AND, XOR and OR of one operand pair from a single builtin instance.
+extern fn bitwise(lhs: u128, rhs: u128) -> (u128, u128, u128) implicits(core::integer::Bitwise) nopanic;
+
 /// Append the accepted words of a byte-swapped lane, in stream order.
 #[inline(always)]
-fn push_swapped(swapped: L64, ref words: Array<u16>) {
-    let (r, w0) = div_rem(swapped, B16_NZ);
-    let (r, w1) = div_rem(r, B16_NZ);
-    let (w3, w2) = div_rem(r, B16_NZ);
+fn push_swapped(swapped: L64, k: K, ref words: Array<u16>) {
+    let (d, _, _) = k;
+    let (r, w0) = div_rem(swapped, d);
+    let (r, w1) = div_rem(r, d);
+    let (w3, w2) = div_rem(r, d);
     accept(w0, ref words);
     accept(w1, ref words);
     accept(w2, ref words);
@@ -95,88 +102,94 @@ fn push_swapped(swapped: L64, ref words: Array<u16>) {
 
 /// Append the accepted words of one rate lane (< 2^64), in stream order.
 #[inline(always)]
-fn push_lane(lane: L64, ref words: Array<u16>) {
+fn push_lane(lane: L64, k: K, ref words: Array<u16>) {
+    let (_, m64, _) = k;
     let lane: u128 = upcast(lane);
-    let even: felt252 = (lane & 0x00ff00ff00ff00ff).into();
+    let (even, _, _) = bitwise(lane, m64);
+    let even: felt252 = even.into();
     let swapped: felt252 = (even * 65535 + lane.into()) * INV256;
-    push_swapped(downcast(swapped).unwrap(), ref words);
+    push_swapped(downcast(swapped).unwrap(), k, ref words);
 }
 
 /// Byte-swap both halves of a packed lane; append the low half's words and stash the high half.
 #[inline(always)]
-fn push_packed(lane: u128, ref words: Array<u16>, ref later: Array<L64>) {
-    let even: felt252 = (lane & 0x00ff00ff00ff00ff00ff00ff00ff00ff).into();
+fn push_packed(lane: u128, k: K, ref words: Array<u16>, ref later: Array<L64>) {
+    let (_, _, m128) = k;
+    let (even, _, _) = bitwise(lane, m128);
+    let even: felt252 = even.into();
     let swapped: u128 = ((even * 65535 + lane.into()) * INV256).try_into().unwrap();
     let (h, l) = div_rem(upcast::<u128, U128B>(swapped), B64_NZ);
-    push_swapped(l, ref words);
+    push_swapped(l, k, ref words);
     later.append(h);
 }
 
 /// Rate lanes of a packed state: block j (low halves) now, block j + 4 (high halves) stashed.
-fn push_block_packed(state: [u128; 25], ref words: Array<u16>, ref later: Array<L64>) {
+fn push_block_packed(
+    state: [u128; 25], k: K, ref words: Array<u16>, ref later: Array<L64>,
+) {
     let [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16, _, _, _, _, _, _, _, _] =
         state;
-    push_packed(l0, ref words, ref later);
-    push_packed(l1, ref words, ref later);
-    push_packed(l2, ref words, ref later);
-    push_packed(l3, ref words, ref later);
-    push_packed(l4, ref words, ref later);
-    push_packed(l5, ref words, ref later);
-    push_packed(l6, ref words, ref later);
-    push_packed(l7, ref words, ref later);
-    push_packed(l8, ref words, ref later);
-    push_packed(l9, ref words, ref later);
-    push_packed(l10, ref words, ref later);
-    push_packed(l11, ref words, ref later);
-    push_packed(l12, ref words, ref later);
-    push_packed(l13, ref words, ref later);
-    push_packed(l14, ref words, ref later);
-    push_packed(l15, ref words, ref later);
-    push_packed(l16, ref words, ref later);
+    push_packed(l0, k, ref words, ref later);
+    push_packed(l1, k, ref words, ref later);
+    push_packed(l2, k, ref words, ref later);
+    push_packed(l3, k, ref words, ref later);
+    push_packed(l4, k, ref words, ref later);
+    push_packed(l5, k, ref words, ref later);
+    push_packed(l6, k, ref words, ref later);
+    push_packed(l7, k, ref words, ref later);
+    push_packed(l8, k, ref words, ref later);
+    push_packed(l9, k, ref words, ref later);
+    push_packed(l10, k, ref words, ref later);
+    push_packed(l11, k, ref words, ref later);
+    push_packed(l12, k, ref words, ref later);
+    push_packed(l13, k, ref words, ref later);
+    push_packed(l14, k, ref words, ref later);
+    push_packed(l15, k, ref words, ref later);
+    push_packed(l16, k, ref words, ref later);
 }
 
 /// The words of the 17 rate lanes of a block.
-fn push_block(lanes: [L64; 17], ref words: Array<u16>) {
+fn push_block(lanes: [L64; 17], k: K, ref words: Array<u16>) {
     let [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16] = lanes;
-    push_lane(l0, ref words);
-    push_lane(l1, ref words);
-    push_lane(l2, ref words);
-    push_lane(l3, ref words);
-    push_lane(l4, ref words);
-    push_lane(l5, ref words);
-    push_lane(l6, ref words);
-    push_lane(l7, ref words);
-    push_lane(l8, ref words);
-    push_lane(l9, ref words);
-    push_lane(l10, ref words);
-    push_lane(l11, ref words);
-    push_lane(l12, ref words);
-    push_lane(l13, ref words);
-    push_lane(l14, ref words);
-    push_lane(l15, ref words);
-    push_lane(l16, ref words);
+    push_lane(l0, k, ref words);
+    push_lane(l1, k, ref words);
+    push_lane(l2, k, ref words);
+    push_lane(l3, k, ref words);
+    push_lane(l4, k, ref words);
+    push_lane(l5, k, ref words);
+    push_lane(l6, k, ref words);
+    push_lane(l7, k, ref words);
+    push_lane(l8, k, ref words);
+    push_lane(l9, k, ref words);
+    push_lane(l10, k, ref words);
+    push_lane(l11, k, ref words);
+    push_lane(l12, k, ref words);
+    push_lane(l13, k, ref words);
+    push_lane(l14, k, ref words);
+    push_lane(l15, k, ref words);
+    push_lane(l16, k, ref words);
 }
 
 /// The words of 17 stashed (already byte-swapped) lanes.
-fn push_block_swapped(lanes: [L64; 17], ref words: Array<u16>) {
+fn push_block_swapped(lanes: [L64; 17], k: K, ref words: Array<u16>) {
     let [l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11, l12, l13, l14, l15, l16] = lanes;
-    push_swapped(l0, ref words);
-    push_swapped(l1, ref words);
-    push_swapped(l2, ref words);
-    push_swapped(l3, ref words);
-    push_swapped(l4, ref words);
-    push_swapped(l5, ref words);
-    push_swapped(l6, ref words);
-    push_swapped(l7, ref words);
-    push_swapped(l8, ref words);
-    push_swapped(l9, ref words);
-    push_swapped(l10, ref words);
-    push_swapped(l11, ref words);
-    push_swapped(l12, ref words);
-    push_swapped(l13, ref words);
-    push_swapped(l14, ref words);
-    push_swapped(l15, ref words);
-    push_swapped(l16, ref words);
+    push_swapped(l0, k, ref words);
+    push_swapped(l1, k, ref words);
+    push_swapped(l2, k, ref words);
+    push_swapped(l3, k, ref words);
+    push_swapped(l4, k, ref words);
+    push_swapped(l5, k, ref words);
+    push_swapped(l6, k, ref words);
+    push_swapped(l7, k, ref words);
+    push_swapped(l8, k, ref words);
+    push_swapped(l9, k, ref words);
+    push_swapped(l10, k, ref words);
+    push_swapped(l11, k, ref words);
+    push_swapped(l12, k, ref words);
+    push_swapped(l13, k, ref words);
+    push_swapped(l14, k, ref words);
+    push_swapped(l15, k, ref words);
+    push_swapped(l16, k, ref words);
 }
 
 /// The 25 lanes of S4 from its 9 felts; `None` unless every felt is < 2^192 and the last one is
@@ -280,24 +293,26 @@ pub fn hash_to_point(
     );
     let mut words: Array<u16> = array![];
     let mut later: Array<L64> = array![];
-    push_block_packed(w, ref words, ref later); // blocks 0 | 4
+    // Divisor and byte-swap masks in the frame: one instruction per use instead of two.
+    let k: K = (B16_NZ, 0x00ff00ff00ff00ff, 0x00ff00ff00ff00ff00ff00ff00ff00ff);
+    push_block_packed(w, k, ref words, ref later); // blocks 0 | 4
     let w = keccak_f1600_x2(w);
-    push_block_packed(w, ref words, ref later); // blocks 1 | 5
+    push_block_packed(w, k, ref words, ref later); // blocks 1 | 5
     let w = keccak_f1600_x2(w);
-    push_block_packed(w, ref words, ref later); // blocks 2 | 6
+    push_block_packed(w, k, ref words, ref later); // blocks 2 | 6
     let w = keccak_f1600_x2(w);
     let s8 = split_check(w, s4)?; // the recomputed S4 must equal the supplied one
-    push_block(rate(s4), ref words); // block 3
+    push_block(rate(s4), k, ref words); // block 3
     let mut later = later.span();
-    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), ref words); // block 4
-    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), ref words); // block 5
-    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), ref words); // block 6
+    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), k, ref words); // block 4
+    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), k, ref words); // block 5
+    push_block_swapped((*later.multi_pop_front::<17>().unwrap()).unbox(), k, ref words); // block 6
     // Block 7 onward, stopping at 512 accepted words.
     let mut state: Span<L64> = s8.span();
     loop {
         let mut lanes = state.slice(0, 17);
         while let Some(lane) = lanes.pop_front() {
-            push_lane(*lane, ref words);
+            push_lane(*lane, k, ref words);
             if words.len() >= 512 {
                 break;
             }

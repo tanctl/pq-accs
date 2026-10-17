@@ -30,7 +30,7 @@
 use corelib_imports::bounded_int::bounded_int::div_rem;
 use corelib_imports::bounded_int::{BoundedInt, DivRemHelper, UnitInt, upcast};
 use crate::hash_to_point::hash_to_point;
-use crate::ntt::{NTT_SCALE, ntt128_fwd, ntt128_inv_mul_off};
+use crate::ntt::{NTT_SCALE, ntt128_fwd, ntt128_mul_off};
 use crate::packing::unpack_512_u16;
 
 /// The u128 bitwise libfunc: AND, XOR and OR of one operand pair from a single builtin instance.
@@ -166,7 +166,7 @@ pub fn decode_s2(packed: Span<felt252>) -> Option<(Array<felt252>, u64)> {
 }
 
 /// One block of s1' + 2^15: its squared centered pairs are added to `acc`; anything nonzero
-/// added to `bad` rejects (e not a u128, or a digit of e at or above 2^16).
+/// added to `bad` rejects (a digit of e at or above 2^16); `None` if e is not a u128.
 #[inline(always)]
 fn s1_block(
     v: felt252,
@@ -179,7 +179,7 @@ fn s1_block(
     masks: (u128, u128),
     ref acc: felt252,
     ref bad: felt252,
-) {
+) -> Option<()> {
     let (m_odd, m_d02) = masks;
     let vm: u256 = v.into();
     let x: felt252 = vm.low.into() + carry;
@@ -187,10 +187,7 @@ fn s1_block(
     let e: felt252 = c0.into() + c1.into() * B1 + c2.into() * B2 + c3.into() * B3 + E_OFFSET
         - x
         - Q_F * k;
-    let e: u128 = match e.try_into() {
-        Some(e) => e,
-        None => 0xffffffffffffffffffffffffffffffff,
-    };
+    let e: u128 = e.try_into()?;
     let (hi, _, _) = bitwise(e, m_odd);
     bad += hi.into();
     let (p0, _, _) = bitwise(e, m_d02);
@@ -198,6 +195,7 @@ fn s1_block(
     let q0 = p0 - OFF_PAIR;
     let q1 = (e.into() - p0) * INV_2_32 - OFF_PAIR;
     acc += q0 * q0 + q1 * q1;
+    Some(())
 }
 
 /// The two k blocks of a felt's low 128 bits (even and odd 16-bit slots).
@@ -219,7 +217,7 @@ fn s1_felt(
     masks: (u128, u128),
     ref acc: felt252,
     ref bad: felt252,
-) {
+) -> Option<()> {
     let kv: u256 = f.into();
     let (ka, kb) = k_low(kv.low, m_even);
     let (kc, _, _) = bitwise(kv.high, m_even);
@@ -230,9 +228,10 @@ fn s1_felt(
         .multi_pop_front::<12>()
         .unwrap())
         .unbox();
-    s1_block(v0, ref carry, c0, c1, c2, c3, ka, masks, ref acc, ref bad);
-    s1_block(v1, ref carry, c4, c5, c6, c7, kb, masks, ref acc, ref bad);
-    s1_block(v2, ref carry, c8, c9, c10, c11, kc, masks, ref acc, ref bad);
+    s1_block(v0, ref carry, c0, c1, c2, c3, ka, masks, ref acc, ref bad)?;
+    s1_block(v1, ref carry, c4, c5, c6, c7, kb, masks, ref acc, ref bad)?;
+    s1_block(v2, ref carry, c8, c9, c10, c11, kc, masks, ref acc, ref bad)?;
+    Some(())
 }
 
 /// ||s1'||^2 for s1' = c - s2 * h - q * k, from the offset product blocks `v`, the words `c` and
@@ -252,17 +251,17 @@ fn s1_norm(v: Span<felt252>, c: Span<u16>, kp: Span<felt252>) -> Option<felt252>
     let mut ik = kp.slice(0, BLOCK_FELTS - 1);
     while let Some(f3) = ik.multi_pop_front::<3>() {
         let [f0, f1, f2] = (*f3).unbox();
-        s1_felt(f0, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad);
-        s1_felt(f1, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad);
-        s1_felt(f2, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad);
+        s1_felt(f0, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
+        s1_felt(f1, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
+        s1_felt(f2, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
     }
     let kv: u256 = (*kp.at(BLOCK_FELTS - 1)).into();
     let (ka, kb) = k_low(kv.low, m_even);
     bad += kv.high.into();
     let [v0, v1] = (*iv.multi_pop_front::<2>().unwrap()).unbox();
     let [c0, c1, c2, c3, c4, c5, c6, c7] = (*ws.multi_pop_front::<8>().unwrap()).unbox();
-    s1_block(v0, ref carry, c0, c1, c2, c3, ka, masks, ref acc, ref bad);
-    s1_block(v1, ref carry, c4, c5, c6, c7, kb, masks, ref acc, ref bad);
+    s1_block(v0, ref carry, c0, c1, c2, c3, ka, masks, ref acc, ref bad)?;
+    s1_block(v1, ref carry, c4, c5, c6, c7, kb, masks, ref acc, ref bad)?;
     if bad != 0 {
         return None;
     }
@@ -287,7 +286,7 @@ fn blocks(d: Span<u16>) -> Array<felt252> {
     out
 }
 
-/// NTT(H) / 128: the 128 transformed key blocks, scaled for `ntt128_inv_mul_off`, for a canonical
+/// NTT(H) / 128: the 128 transformed key blocks, scaled for `ntt128_mul_off`, for a canonical
 /// 29-felt public key (h + 6144, base q).
 pub fn transformed_public_key(pk: Span<felt252>) -> Option<Array<felt252>> {
     if pk.len() != PUBLIC_KEY_FELTS {
@@ -324,7 +323,7 @@ pub fn verify(message_hash: felt252, ntt_h: Span<felt252>, signature: Span<felt2
     if n2 > SIG_BOUND_512 {
         return false;
     }
-    let v = ntt128_inv_mul_off(ntt_h, ntt128_fwd(sb.span()).span());
+    let v = ntt128_mul_off(sb.span(), ntt_h);
     let n1 = match s1_norm(v.span(), c.span(), signature.slice(K_AT, BLOCK_FELTS)) {
         Some(n) => n,
         None => { return false; },
