@@ -192,28 +192,41 @@ fn push_block_swapped(lanes: [L64; 17], k: K, ref words: Array<u16>) {
     push_swapped(l16, k, ref words);
 }
 
+/// Three 64-bit lanes from a felt below 2^192.
+#[inline(always)]
+fn lanes3(f: felt252) -> Option<(L64, L64, L64)> {
+    let v: u256 = f.into();
+    let l2: L64 = downcast(v.high)?;
+    let (l1, l0) = div_rem(upcast::<u128, U128B>(v.low), B64_NZ);
+    Some((l0, l1, l2))
+}
+
 /// The 25 lanes of S4 from its 9 felts; `None` unless every felt is < 2^192 and the last one is
 /// < 2^64.
 fn mid_state_lanes(mid: Span<felt252>) -> Option<[L64; 25]> {
     if mid.len() != MID_STATE_FELTS {
         return None;
     }
-    let mut out: Array<L64> = array![];
-    let mut it = mid.slice(0, 8);
-    while let Some(f) = it.pop_front() {
-        let v: u256 = (*f).into();
-        let l2: L64 = downcast(v.high)?;
-        let (l1, l0) = div_rem(upcast::<u128, U128B>(v.low), B64_NZ);
-        out.append(l0);
-        out.append(l1);
-        out.append(l2);
-    }
-    let last: u256 = (*mid.at(8)).into();
+    let [f0, f1, f2, f3, f4, f5, f6, f7, f8] = (*mid.try_into().unwrap()).unbox();
+    let (a0, a1, a2) = lanes3(f0)?;
+    let (a3, a4, a5) = lanes3(f1)?;
+    let (a6, a7, a8) = lanes3(f2)?;
+    let (a9, a10, a11) = lanes3(f3)?;
+    let (a12, a13, a14) = lanes3(f4)?;
+    let (a15, a16, a17) = lanes3(f5)?;
+    let (a18, a19, a20) = lanes3(f6)?;
+    let (a21, a22, a23) = lanes3(f7)?;
+    let last: u256 = f8.into();
     if last.high != 0 {
         return None;
     }
-    out.append(downcast(last.low)?);
-    Some((*out.span().try_into().unwrap()).unbox())
+    let a24: L64 = downcast(last.low)?;
+    Some(
+        [
+            a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19,
+            a20, a21, a22, a23, a24,
+        ],
+    )
 }
 
 /// a + b * 2^64.
@@ -233,19 +246,38 @@ fn halves(x: u128) -> (L64, L64) {
     div_rem(upcast::<u128, U128B>(x), B64_NZ)
 }
 
+/// High half of a packed lane, adding its low half's difference from `s` to `bad`.
+#[inline(always)]
+fn hi_check(w: u128, s: L64, ref bad: felt252) -> L64 {
+    let (h, l) = halves(w);
+    let d: felt252 = upcast::<L64, felt252>(l) - upcast(s);
+    bad += d * d;
+    h
+}
+
 /// High halves of a packed state, after checking that its low halves equal `s`.
 fn split_check(w: [u128; 25], s: [L64; 25]) -> Option<[L64; 25]> {
-    let mut hi: Array<L64> = array![];
-    let mut iw = w.span();
-    let mut is = s.span();
-    while let Some(lane) = iw.pop_front() {
-        let (h, l) = halves(*lane);
-        if upcast::<L64, u128>(l) != upcast(*is.pop_front().unwrap()) {
-            return None;
-        }
-        hi.append(h);
+    let [w0, w1, w2, w3, w4, w5, w6, w7, w8, w9, w10, w11, w12, w13, w14, w15, w16, w17, w18, w19, w20, w21, w22, w23, w24] =
+        w;
+    let [s0, s1, s2, s3, s4, s5, s6, s7, s8, s9, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24] =
+        s;
+    // Sum of 25 squares below 2^128 each: zero iff every low half matches.
+    let mut bad: felt252 = 0;
+    let out = [
+        hi_check(w0, s0, ref bad), hi_check(w1, s1, ref bad), hi_check(w2, s2, ref bad),
+        hi_check(w3, s3, ref bad), hi_check(w4, s4, ref bad), hi_check(w5, s5, ref bad),
+        hi_check(w6, s6, ref bad), hi_check(w7, s7, ref bad), hi_check(w8, s8, ref bad),
+        hi_check(w9, s9, ref bad), hi_check(w10, s10, ref bad), hi_check(w11, s11, ref bad),
+        hi_check(w12, s12, ref bad), hi_check(w13, s13, ref bad), hi_check(w14, s14, ref bad),
+        hi_check(w15, s15, ref bad), hi_check(w16, s16, ref bad), hi_check(w17, s17, ref bad),
+        hi_check(w18, s18, ref bad), hi_check(w19, s19, ref bad), hi_check(w20, s20, ref bad),
+        hi_check(w21, s21, ref bad), hi_check(w22, s22, ref bad), hi_check(w23, s23, ref bad),
+        hi_check(w24, s24, ref bad),
+    ];
+    if bad != 0 {
+        return None;
     }
-    Some((*hi.span().try_into().unwrap()).unbox())
+    Some(out)
 }
 
 #[inline(always)]

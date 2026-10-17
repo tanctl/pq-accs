@@ -70,8 +70,9 @@ pub mod Falcon512Account {
     #[abi(embed_v0)]
     impl AccountImpl of super::IFalcon512Account<ContractState> {
         fn __execute__(self: @ContractState, calls: Array<Call>) {
-            assert(starknet::get_caller_address().is_zero(), 'Account: invalid caller');
-            assert_valid_tx_version();
+            let info = starknet::get_execution_info().unbox();
+            assert(info.caller_address.is_zero(), 'Account: invalid caller');
+            assert_valid_tx_version(info.tx_info.unbox().version);
             for call in calls.span() {
                 let Call { to, selector, calldata } = *call;
                 starknet::syscalls::call_contract_syscall(to, selector, calldata).unwrap_syscall();
@@ -130,8 +131,8 @@ pub mod Falcon512Account {
         }
     }
 
-    fn assert_valid_tx_version() {
-        let tx_version: u256 = starknet::get_tx_info().unbox().version.into();
+    fn assert_valid_tx_version(version: felt252) {
+        let tx_version: u256 = version.into();
         if tx_version >= QUERY_OFFSET {
             assert(QUERY_OFFSET + MIN_TRANSACTION_VERSION <= tx_version, 'Account: invalid tx version');
         } else {

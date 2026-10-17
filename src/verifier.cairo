@@ -30,7 +30,7 @@
 use corelib_imports::bounded_int::bounded_int::div_rem;
 use corelib_imports::bounded_int::{BoundedInt, DivRemHelper, UnitInt, upcast};
 use crate::hash_to_point::hash_to_point;
-use crate::ntt::{NTT_SCALE, ntt128_fwd, ntt128_mul_off};
+use crate::ntt::{NTT_SCALE, falcon_core, ntt128_fwd};
 use crate::packing::unpack_512_u16;
 
 /// The u128 bitwise libfunc: AND, XOR and OR of one operand pair from a single builtin instance.
@@ -41,7 +41,7 @@ pub const SIGNATURE_FELTS: u32 = 97;
 const SALT_AT: usize = 43;
 const MID_AT: usize = 45;
 const K_AT: usize = 54;
-const BLOCK_FELTS: u32 = 43;
+pub(crate) const BLOCK_FELTS: u32 = 43;
 /// Felts in a canonical public key: 29-slot base-q packing of (h_i + 6144), h_i centered.
 pub const PUBLIC_KEY_FELTS: u32 = 29;
 /// floor(beta^2) for Falcon-512.
@@ -65,13 +65,13 @@ const INV_2_16: felt252 = 0x7fff80000000010ffef000000000000000000000000000000000
 const INV_2_32: felt252 = 0x7fffffff8000010ffffffef0000000000000000000000000000000000000001;
 const INV_2_48: felt252 = 0x7fffffffffff810ffffffffffef000000000000000000000000000000000001;
 // 16-bit slot masks over a u128 (slot j = bits 16j..16j+16).
-const M_S04: u128 = 0x000000000000ffff000000000000ffff;
-const M_S15: u128 = 0x00000000ffff000000000000ffff0000;
-const M_S26: u128 = 0x0000ffff000000000000ffff00000000;
-const M_EVEN: u128 = 0x0000ffff0000ffff0000ffff0000ffff;
-const M_ODD: u128 = 0xffff0000ffff0000ffff0000ffff0000;
+pub(crate) const M_S04: u128 = 0x000000000000ffff000000000000ffff;
+pub(crate) const M_S15: u128 = 0x00000000ffff000000000000ffff0000;
+pub(crate) const M_S26: u128 = 0x0000ffff000000000000ffff00000000;
+pub(crate) const M_EVEN: u128 = 0x0000ffff0000ffff0000ffff0000ffff;
+pub(crate) const M_ODD: u128 = 0xffff0000ffff0000ffff0000ffff0000;
 /// Base-2^32 digits 0 and 2.
-const M_D02: u128 = 0x00000000ffffffff00000000ffffffff;
+pub(crate) const M_D02: u128 = 0x00000000ffffffff00000000ffffffff;
 
 type U128B = BoundedInt<0, 0xffffffffffffffffffffffffffffffff>;
 type L64 = BoundedInt<0, 0xffffffffffffffff>;
@@ -107,16 +107,11 @@ fn s2_low(lo: u128, m: (u128, u128, u128)) -> (felt252, felt252, felt252) {
     (a, rest * INV_2_16, p0 * p0 + pa1 * pa1 + pb0 * pb0 + pb1 * pb1)
 }
 
-/// Three s2 blocks of a full felt: appended centered; squares, block sum and junk accumulated.
+/// Three centered s2 blocks of a full felt; squares, block sum and junk accumulated.
 #[inline(always)]
-fn s2_felt(
-    f: felt252,
-    m: (u128, u128, u128),
-    ref out: Array<felt252>,
-    ref sq: felt252,
-    ref sum: felt252,
-    ref bad: felt252,
-) {
+pub(crate) fn s2_felt(
+    f: felt252, m: (u128, u128, u128), ref sq: felt252, ref sum: felt252, ref bad: felt252,
+) -> (felt252, felt252, felt252) {
     let v: u256 = f.into();
     let (m04, _, m26) = m;
     let (a, b, sab) = s2_low(v.low, m);
@@ -128,41 +123,29 @@ fn s2_felt(
     let pc1 = q2 * INV_2_32;
     sq += sab + q0 * q0 + pc1 * pc1;
     sum += a + b + c;
-    out.append(a - OFF_BLOCK);
-    out.append(b - OFF_BLOCK);
-    out.append(c - OFF_BLOCK);
+    (a - OFF_BLOCK, b - OFF_BLOCK, c - OFF_BLOCK)
 }
 
-/// The 128 centered s2 blocks and ||s2||^2, or `None` if a felt has bits outside its slots.
-pub fn decode_s2(packed: Span<felt252>) -> Option<(Array<felt252>, u64)> {
-    if packed.len() != BLOCK_FELTS {
-        return None;
-    }
-    let mut out: Array<felt252> = array![];
-    let mut sq: felt252 = 0; // sum of squared offset-digit pairs: slots 0 and 2 hold sum d^2
-    let mut sum: felt252 = 0; // sum of offset blocks: its base-2^32 digits sum to sum d
-    let mut bad: felt252 = 0; // sum of nonnegative junk values: zero iff each is zero
-    let m = (M_S04, M_S15, M_S26);
-    let mut it = packed.slice(0, BLOCK_FELTS - 1);
-    while let Some(f3) = it.multi_pop_front::<3>() {
-        let [f0, f1, f2] = (*f3).unbox();
-        s2_felt(f0, m, ref out, ref sq, ref sum, ref bad);
-        s2_felt(f1, m, ref out, ref sq, ref sum, ref bad);
-        s2_felt(f2, m, ref out, ref sq, ref sum, ref bad);
-    }
-    let v: u256 = (*packed.at(BLOCK_FELTS - 1)).into();
-    if v.high != 0 || bad != 0 {
-        return None;
-    }
+/// The two centered s2 blocks of the last felt (which has no high part).
+#[inline(always)]
+pub(crate) fn s2_last(
+    f: felt252, m: (u128, u128, u128), ref sq: felt252, ref sum: felt252, ref bad: felt252,
+) -> (felt252, felt252) {
+    let v: u256 = f.into();
+    bad += v.high.into();
     let (a, b, sab) = s2_low(v.low, m);
     sq += sab;
     sum += a + b;
-    out.append(a - OFF_BLOCK);
-    out.append(b - OFF_BLOCK);
+    (a - OFF_BLOCK, b - OFF_BLOCK)
+}
+
+/// ||s2||^2 from the accumulated squared pairs and block sum (offset digits d = s2 + 6144).
+#[inline(always)]
+pub(crate) fn s2_norm(sq: felt252, sum: felt252) -> u64 {
     let sum: u128 = sum.try_into().unwrap(); // < 2^119
     let (_, digit_sum) = DivRem::div_rem(sum, 0xffffffff_u128.try_into().unwrap());
     let n2: felt252 = slots_0_2(sq) - digit_sum.into() * 2 * OFF + S2_SQ_OFFSET;
-    Some((out, n2.try_into().unwrap())) // < 512 * 59392^2
+    n2.try_into().unwrap() // < 512 * 65536^2
 }
 
 /// One block of s1' + 2^15: its squared centered pairs are added to `acc`; anything nonzero
@@ -206,11 +189,13 @@ fn k_low(lo: u128, m_even: u128) -> (felt252, felt252) {
     (ka, (lo.into() - ka) * INV_2_16)
 }
 
-/// The three blocks of one full k felt.
+/// The three blocks of one full k felt, against product blocks v0..v2.
 #[inline(always)]
-fn s1_felt(
+pub(crate) fn s1_felt(
     f: felt252,
-    ref iv: Span<felt252>,
+    v0: felt252,
+    v1: felt252,
+    v2: felt252,
     ref ws: Span<u16>,
     ref carry: felt252,
     m_even: u128,
@@ -223,7 +208,6 @@ fn s1_felt(
     let (kc, _, _) = bitwise(kv.high, m_even);
     let kc: felt252 = kc.into();
     bad += kv.high.into() - kc;
-    let [v0, v1, v2] = (*iv.multi_pop_front::<3>().unwrap()).unbox();
     let [c0, c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, c11] = (*ws
         .multi_pop_front::<12>()
         .unwrap())
@@ -234,40 +218,41 @@ fn s1_felt(
     Some(())
 }
 
-/// ||s1'||^2 for s1' = c - s2 * h - q * k, from the offset product blocks `v`, the words `c` and
-/// the packed k; `None` if k is malformed or some s1'_i is outside [-2^15, 2^15).
-fn s1_norm(v: Span<felt252>, c: Span<u16>, kp: Span<felt252>) -> Option<felt252> {
-    if kp.len() != BLOCK_FELTS {
-        return None;
-    }
-    let mut ws = c.slice(0, 512);
-    let last: u256 = (*v.at(127)).into();
-    let mut carry: felt252 = K_WRAP - last.high.into();
-    let mut acc: felt252 = 0;
-    let mut bad: felt252 = 0; // sum of a few hundred values below 2^128: zero iff each is zero
-    let masks = (M_ODD, M_D02);
-    let m_even = M_EVEN;
-    let mut iv = v;
-    let mut ik = kp.slice(0, BLOCK_FELTS - 1);
-    while let Some(f3) = ik.multi_pop_front::<3>() {
-        let [f0, f1, f2] = (*f3).unbox();
-        s1_felt(f0, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
-        s1_felt(f1, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
-        s1_felt(f2, ref iv, ref ws, ref carry, m_even, masks, ref acc, ref bad)?;
-    }
-    let kv: u256 = (*kp.at(BLOCK_FELTS - 1)).into();
+/// The two blocks of the last k felt (which has no high part).
+#[inline(always)]
+pub(crate) fn s1_last(
+    f: felt252,
+    v0: felt252,
+    v1: felt252,
+    ref ws: Span<u16>,
+    ref carry: felt252,
+    m_even: u128,
+    masks: (u128, u128),
+    ref acc: felt252,
+    ref bad: felt252,
+) -> Option<()> {
+    let kv: u256 = f.into();
     let (ka, kb) = k_low(kv.low, m_even);
     bad += kv.high.into();
-    let [v0, v1] = (*iv.multi_pop_front::<2>().unwrap()).unbox();
     let [c0, c1, c2, c3, c4, c5, c6, c7] = (*ws.multi_pop_front::<8>().unwrap()).unbox();
     s1_block(v0, ref carry, c0, c1, c2, c3, ka, masks, ref acc, ref bad)?;
     s1_block(v1, ref carry, c4, c5, c6, c7, kb, masks, ref acc, ref bad)?;
-    if bad != 0 {
-        return None;
-    }
-    // acc = sum s_a^2 + (sum 2 s_a s_b) * 2^64 + (sum s_b^2) * 2^128 with |s| <= 2^15 over 256
-    // pairs; shifting the signed middle term by 2^63 makes every 64-bit slot exact.
-    Some(slots_0_2(acc + 0x80000000000000000000000000000000))
+    Some(())
+}
+
+/// The carry into block 0: minus the top digits of the last product block (negacyclic wrap).
+#[inline(always)]
+pub(crate) fn wrap_carry(v127: felt252) -> felt252 {
+    let last: u256 = v127.into();
+    K_WRAP - last.high.into()
+}
+
+/// ||s1'||^2 from the accumulated pair squares: acc = sum s_a^2 + (sum 2 s_a s_b) 2^64 +
+/// (sum s_b^2) 2^128 with |s| <= 2^15 over 256 pairs; shifting the signed middle term by 2^63
+/// makes every 64-bit slot exact.
+#[inline(always)]
+pub(crate) fn s1_total(acc: felt252) -> felt252 {
+    slots_0_2(acc + 0x80000000000000000000000000000000)
 }
 
 #[inline(always)]
@@ -286,7 +271,7 @@ fn blocks(d: Span<u16>) -> Array<felt252> {
     out
 }
 
-/// NTT(H) / 128: the 128 transformed key blocks, scaled for `ntt128_mul_off`, for a canonical
+/// NTT(H) / 128: the 128 transformed key blocks, scaled for `ntt::falcon_core`, for a canonical
 /// 29-felt public key (h + 6144, base q).
 pub fn transformed_public_key(pk: Span<felt252>) -> Option<Array<felt252>> {
     if pk.len() != PUBLIC_KEY_FELTS {
@@ -313,22 +298,12 @@ pub fn verify(message_hash: felt252, ntt_h: Span<felt252>, signature: Span<felt2
         Some(v) => v,
         None => { return false; },
     };
-    if ntt_h.len() != 128 {
+    if ntt_h.len() != 128 || c.len() < 512 {
         return false;
     }
-    let (sb, n2) = match decode_s2(signature.slice(0, BLOCK_FELTS)) {
-        Some(v) => v,
-        None => { return false; },
-    };
-    if n2 > SIG_BOUND_512 {
-        return false;
-    }
-    let v = ntt128_mul_off(sb.span(), ntt_h);
-    let n1 = match s1_norm(v.span(), c.span(), signature.slice(K_AT, BLOCK_FELTS)) {
-        Some(n) => n,
-        None => { return false; },
-    };
-    let total: u64 = match (n1 + n2.into()).try_into() {
+    let s2p = signature.slice(0, BLOCK_FELTS);
+    let kp = signature.slice(K_AT, BLOCK_FELTS);
+    let total: u64 = match falcon_core(s2p, ntt_h, c.span().slice(0, 512), kp) {
         Some(t) => t,
         None => { return false; },
     };
