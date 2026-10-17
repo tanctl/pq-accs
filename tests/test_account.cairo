@@ -1,27 +1,42 @@
 use falcon512_account::account::{
     IFalcon512AccountDispatcher, IFalcon512AccountDispatcherTrait, ISRC5_ID, ISRC6_ID,
 };
-use falcon512_account::verifier::public_key_commitment;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_signature_global,
     start_cheat_transaction_hash_global,
 };
+use starknet::ClassHash;
 use super::fixtures;
 
-fn deploy() -> IFalcon512AccountDispatcher {
+fn key_class(name: ByteArray) -> ClassHash {
+    *declare(name).unwrap().contract_class().class_hash
+}
+
+fn deploy_with(key: ClassHash) -> Result<IFalcon512AccountDispatcher, Array<felt252>> {
     let class = declare("Falcon512Account").unwrap().contract_class();
     let mut calldata: Array<felt252> = array![];
     fixtures::public_key().serialize(ref calldata);
-    let (address, _) = class.deploy(@calldata).unwrap();
-    IFalcon512AccountDispatcher { contract_address: address }
+    key.serialize(ref calldata);
+    let (address, _) = class.deploy(@calldata)?;
+    Ok(IFalcon512AccountDispatcher { contract_address: address })
+}
+
+fn deploy() -> IFalcon512AccountDispatcher {
+    deploy_with(key_class("Falcon512KeyFixture")).unwrap()
 }
 
 #[test]
-fn constructor_stores_commitment_and_interfaces() {
-    let a = deploy();
-    assert!(a.get_public_key_commitment() == public_key_commitment(fixtures::public_key().span()).unwrap());
+fn constructor_stores_key_class_and_interfaces() {
+    let key = key_class("Falcon512KeyFixture");
+    let a = deploy_with(key).unwrap();
+    assert!(a.get_key_class() == key);
     assert!(a.supports_interface(ISRC5_ID) && a.supports_interface(ISRC6_ID));
     assert!(!a.supports_interface(0x1234));
+}
+
+#[test]
+fn constructor_rejects_key_class_of_another_key() {
+    assert!(deploy_with(key_class("Falcon512KeyOther")).is_err());
 }
 
 #[test]

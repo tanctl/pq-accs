@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Falcon-512 signer for the Starknet Falcon512Account.
 
-Signature (225 felts): s2 (43) || salt (2) || S4 (9) || K (43) || NTT(H) (128), where (salt, s2)
-is a standard Falcon-512 signature over the 32-byte little-endian transaction hash (SHAKE-256
-hash-to-point of salt || message), and the rest is verifier data:
+Signature (97 felts): s2 (43) || salt (2) || S4 (9) || K (43), where (salt, s2) is a standard
+Falcon-512 signature over the 32-byte little-endian transaction hash (SHAKE-256 hash-to-point of
+salt || message), and the rest is verifier data:
 - S4: the SHAKE-256 sponge state after its 4th Keccak-f permutation (the verifier recomputes it and
   runs the two halves of the squeeze side by side);
 - K: k_i = (c_i - (s2*h)_i - s1_i) / q for the centered s1, so that s1 = c - s2*h - q*K with no
-  reduction on chain (the verifier range-checks s1; any other K only gives a larger norm);
-- NTT(H): the 128-point Stark-field transform of the public key's base-2^32 blocks.
+  reduction on chain (the verifier range-checks s1; any other K only gives a larger norm).
+The account reads NTT(H) / 128 (`ntt_public_key`) from its key class (scripts/gen_key_class.py).
 s2 and K use 16-bit slots (s2_i + 6144, k_i + 2^15), packed so that bitwise masks yield the
 verifier's base-2^32 blocks directly (`pack_blocks16`). The salt is drawn uniformly at random until
 hash-to-point completes within 8 Keccak permutations (the minimum) and every |k_i| < 2^15; any
@@ -119,8 +119,8 @@ def quotients(message_hash: int, salt: bytes, s2: list[int], h: list[int]) -> li
 
 
 def ntt_public_key(h: list[int]) -> list[int]:
-    """NTT(H): centered h in base-2^32 blocks of 4, 128-point negacyclic CT transform over the
-    Stark field (psi^128 = -1). Bit-exact with `ntt128_fwd`."""
+    """NTT(H) / 128: centered h in base-2^32 blocks of 4, 128-point negacyclic CT transform over the
+    Stark field (psi^128 = -1), times 1/128. Bit-exact with `verifier::transformed_public_key`."""
     p, n = STARK_P, 128
     psi = pow(3, (p - 1) // 256, p)
     zetas = [pow(psi, int(format(k, "07b")[::-1], 2), p) for k in range(n)]
@@ -136,7 +136,8 @@ def ntt_public_key(h: list[int]) -> list[int]:
                 a[j + ln] = (a[j] - t) % p
                 a[j] = (a[j] + t) % p
         ln //= 2
-    return a
+    ninv = pow(n, -1, p)
+    return [x * ninv % p for x in a]
 
 
 def hash_to_point_words(message_hash: int, salt: bytes) -> tuple[list[int], int]:
@@ -227,7 +228,7 @@ def encode_signature(message_hash: int, salt: bytes, s2: list[int], h: list[int]
         assert k is not None, "a quotient is out of range; sign again"
     return (pack_s2(s2) + [int.from_bytes(salt[:20], "little"), int.from_bytes(salt[20:], "little")]
             + pack_mid_state(sponge_state(message_hash, salt, 4))
-            + pack_blocks16([x + K_OFF for x in k]) + ntt_public_key(h))
+            + pack_blocks16([x + K_OFF for x in k]))
 
 
 def sign(fpy, sk, h: list[int], message_hash: int) -> list[int]:

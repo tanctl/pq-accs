@@ -80,6 +80,15 @@ def shake_state_after(data: bytes, perms: int) -> list[int]:
     return st
 
 
+def unpack_blocks16(felts: list[int]) -> list[int]:
+    """512 digits from the 43-felt 16-bit slot encoding (see signer.pack_blocks16)."""
+    blocks = []
+    for j, f in enumerate(felts):
+        lo, hi = f & ((1 << 128) - 1), f >> 128
+        blocks += [lo, lo >> 16] + ([hi] if j < 42 else [])
+    return [(b >> (32 * t)) & 0xffff for b in blocks for t in range(4)]
+
+
 def ntt128(h: list[int]) -> list[int]:
     """128-point negacyclic transform over the Stark field of centered base-2^32 key blocks."""
     psi = pow(3, (P - 1) // 256, P)
@@ -109,23 +118,30 @@ def main() -> None:
 
     tx = rpc(args.rpc, "starknet_getTransactionByHash", {"transaction_hash": args.tx})
     sig = [int(x, 16) for x in tx["signature"]]
-    assert len(sig) in (162, 171), f"expected a 162- or 171-felt signature, got {len(sig)}"
+    assert len(sig) in (97, 162, 171), f"expected a 97-, 162- or 171-felt signature, got {len(sig)}"
     dep = rpc(args.rpc, "starknet_getTransactionByHash", {"transaction_hash": args.deploy_tx})
     assert dep["type"] == "DEPLOY_ACCOUNT" and int(dep["contract_address_salt"], 16) >= 0
     pk = [int(x, 16) for x in dep["constructor_calldata"]]
     assert pk[0] == 29, "constructor calldata must be the 29-felt public key array"
     h = [d - 6144 for d in base_q_digits(pk[1:], 9)]
 
-    s2 = [d - 6144 for d in base_q_digits(sig[:32], 8)]
-    salt = sig[32].to_bytes(20, "little") + sig[33].to_bytes(20, "little")
-    print("account:", tx["sender_address"])
     msg = int(args.tx, 16).to_bytes(32, "little")
-    ntt_ok = sig[34:162] == ntt128(h)
-    print("carried NTT(H) equals the transform of the deployed key:", ntt_ok)
+    print("account:", tx["sender_address"])
+    ntt_ok = True
+    if len(sig) == 97:
+        s2 = [d - 6144 for d in unpack_blocks16(sig[:43])]
+        salt = sig[43].to_bytes(20, "little") + sig[44].to_bytes(20, "little")
+        mid = sig[45:54]
+    else:
+        s2 = [d - 6144 for d in base_q_digits(sig[:32], 8)]
+        salt = sig[32].to_bytes(20, "little") + sig[33].to_bytes(20, "little")
+        mid = sig[162:] if len(sig) == 171 else None
+        ntt_ok = sig[34:162] == ntt128(h)
+        print("carried NTT(H) equals the transform of the deployed key:", ntt_ok)
     mid_ok = True
-    if len(sig) == 171:
+    if mid is not None:
         s4 = shake_state_after(salt + msg, 4)
-        mid_ok = sig[162:] == [sum(v << (64 * t) for t, v in enumerate(s4[3 * j:3 * j + 3])) for j in range(9)]
+        mid_ok = mid == [sum(v << (64 * t) for t, v in enumerate(s4[3 * j:3 * j + 3])) for j in range(9)]
         print("carried S4 equals the SHAKE-256 state after 4 permutations:", mid_ok)
 
     scheme = falcon.Falcon(N)

@@ -17,7 +17,9 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "signer"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import falcon512_signer as fs  # noqa: E402
+import gen_key_class  # noqa: E402
 
 # ---- Keccak-f[1600] from FIPS 202 ------------------------------------------------------------
 RC = [0x0000000000000001, 0x0000000000008082, 0x800000000000808A, 0x8000000080008000,
@@ -116,8 +118,14 @@ def main():
 
     # Verifier vectors.
     out.append(arr("public_key", fs.pack_public_key(h)))
+    out.append(arr("ntt_h", fs.ntt_public_key(h)))
     other_h = [random.randrange(fs.Q) for _ in range(512)]
     out.append(arr("other_public_key", fs.pack_public_key(other_h)))
+    out.append(arr("other_ntt_h", fs.ntt_public_key(other_h)))
+    # the fixture key's key class, and one for the other key (a mismatch for the constructor)
+    (args.out.parent / "key_class.cairo").write_text(
+        gen_key_class.source(fs.ntt_public_key(h), "Falcon512KeyFixture")
+        + gen_key_class.source(fs.ntt_public_key(other_h), "Falcon512KeyOther").split("\n", 1)[1])
     cases = []  # (msg, signature felts, expected)
 
     def enc(m: int, salt_: bytes, s2_: list[int]) -> list[int]:
@@ -165,10 +173,9 @@ def main():
     assert sum(x * x for x in big) > fs.SIG_BOUND_512 and not ref_verify(mh, salt, big)
     cases.append((mh, enc(mh, salt, big), False))
     # format-level rejections (no falcon.py counterpart). Layout: s2 [0, 43), salt [43, 45),
-    # S4 [45, 54), k [54, 97), NTT(H) [97, 225).
+    # S4 [45, 54), k [54, 97).
     sig = enc(mh, salt, s2)
     tampers = [
-        (97 + 7, 1),            # carried NTT(H) altered
         (43, 1 << 160),         # oversized salt
         (45, 1), (45 + 4, 1 << 128), (53, 1 << 64), (46, 1 << 192),  # S4: a lane, top bits
         (54, 1),                # one k digit + 1: s1' moves by q
