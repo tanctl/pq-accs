@@ -1,26 +1,30 @@
-use falcon512_account::verifier::{transformed_public_key, verify};
+use falcon512_account::verifier::{public_key_commitment, verify};
 use super::fixtures;
+
+fn commitment() -> felt252 {
+    public_key_commitment(fixtures::public_key().span()).unwrap()
+}
 
 /// Every case's expectation comes from falcon.py's reference `verify` (or is a format error).
 #[test]
 fn verifier_matches_reference_on_all_cases() {
-    let pk = fixtures::public_key();
+    let c = commitment();
     let expected = fixtures::case_expected();
     let mut i = 0;
     while i != fixtures::N_CASES {
         let (msg, sig) = fixtures::case(i);
-        assert!(verify(msg, pk.span(), sig.span()) == *expected.at(i), "case {}", i);
+        assert!(verify(msg, c, sig.span()) == *expected.at(i), "case {}", i);
         i += 1;
     }
 }
 
 #[test]
 fn valid_signatures_fail_under_another_key() {
-    let other = fixtures::other_public_key();
+    let other = public_key_commitment(fixtures::other_public_key().span()).unwrap();
     let mut i = 0;
     while i != 6 {
         let (msg, sig) = fixtures::case(i);
-        assert!(!verify(msg, other.span(), sig.span()));
+        assert!(!verify(msg, other, sig.span()));
         i += 1;
     }
 }
@@ -37,23 +41,13 @@ fn rejects_non_canonical_public_key() {
         bad.append(*pk.at(i));
         i += 1;
     }
-    assert!(transformed_public_key(bad.span()).is_none());
-    let (msg, sig) = fixtures::case(0);
-    assert!(!verify(msg, bad.span(), sig.span()));
+    assert!(public_key_commitment(bad.span()).is_none());
     let _ = pk.pop_front();
-    assert!(transformed_public_key(pk.span()).is_none());
-    assert!(!verify(msg, pk.span(), sig.span()));
+    assert!(public_key_commitment(pk.span()).is_none());
 }
 
-/// An 8-permutation signature (case 0) and a 9-permutation one (case 4).
 #[test]
 fn bench_verify() {
     let (msg, sig) = fixtures::case(0);
-    assert!(verify(msg, fixtures::public_key().span(), sig.span()));
-}
-
-#[test]
-fn bench_verify_9_permutations() {
-    let (msg, sig) = fixtures::case(4);
-    assert!(verify(msg, fixtures::public_key().span(), sig.span()));
+    assert!(verify(msg, commitment(), sig.span()));
 }

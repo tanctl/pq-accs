@@ -12,14 +12,15 @@
 //! and a block value is an exact integer < 2^224 < p. s1 is then recovered with one reduction
 //! modulo q per coefficient.
 //!
-//! The verifier takes the canonical public key and computes NTT(H) itself; decoding the key
-//! checks every digit, so |h_i| <= 6144 holds for the transform. The signature is the standard
-//! Falcon pair (salt, s2) and nothing else.
+//! The account stores commit(NTT(H)) (computed on-chain from the canonical key, so |h_i| <= 6144
+//! holds for the committed transform); the signature carries NTT(H).
 //!
-//! Signature (34 felts): s2 (32) || salt (2, 20 little-endian bytes each).
+//! Signature (171 felts): s2 (32) || salt (2, 20 little-endian bytes each) || NTT(H) (128) ||
+//! S4 (9), the SHAKE-256 state after the 4th Keccak-f permutation (see `hash_to_point`).
 //! s2 encoding: 8 base-q digits (s2_i + 6144) per u128 half, low half first, two halves per felt;
 //! every digit and every top digit is checked < q, so encodings are canonical.
 
+use core::poseidon::hades_permutation;
 use corelib_imports::bounded_int::bounded_int::{ConstrainHelper, SubHelper, add, constrain, div_rem, sub};
 use corelib_imports::bounded_int::{AddHelper, BoundedInt, DivRemHelper, UnitInt, upcast};
 use crate::hash_to_point::hash_to_point;
@@ -27,7 +28,7 @@ use crate::ntt::{ntt128_fwd, ntt128_inv_mul_off};
 use crate::packing::unpack_512_u16;
 
 /// Felts in a signature.
-pub const SIGNATURE_FELTS: u32 = 34;
+pub const SIGNATURE_FELTS: u32 = 171;
 /// Felts in a canonical public key: 29-slot base-q packing of (h_i + 6144), h_i centered.
 pub const PUBLIC_KEY_FELTS: u32 = 29;
 /// floor(beta^2) for Falcon-512.
@@ -205,33 +206,63 @@ fn blocks(d: Span<u16>) -> Array<felt252> {
 }
 
 /// NTT(H): the 128 transformed key blocks for a canonical 29-felt public key (h + 6144, base q).
-/// `None` unless the key has 29 felts and every digit is canonical.
 pub fn transformed_public_key(pk: Span<felt252>) -> Option<Array<felt252>> {
-    if pk.len() != PUBLIC_KEY_FELTS {
-        return None;
-    }
     let h = unpack_512_u16(pk)?;
     Some(ntt128_fwd(blocks(h.span()).span()))
 }
 
-/// Verifies the standard Falcon-512 signature `signature` (34 felts) on `message_hash` for the
-/// canonical 29-felt `public_key`.
-pub fn verify(message_hash: felt252, public_key: Span<felt252>, signature: Span<felt252>) -> bool {
+/// Poseidon sponge over exactly 128 felts (rate 2, capacity 1), unrolled: domain tag and length
+/// in the capacity, 64 hades permutations. Same security as `poseidon_hash_span` for a fixed
+/// length, without its per-pair loop overhead.
+pub fn commit128(x: Span<felt252>) -> felt252 {
+    assert(x.len() == 128, 'commit: length');
+    let mut it = x;
+    let (mut s0, mut s1, mut s2) = (0, 0, 'FALCON_NTTH_V1' + 128);
+    while let Some(c) = it.multi_pop_front::<16>() {
+        let [a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15] = (*c).unbox();
+        let (t0, t1, t2) = hades_permutation(s0 + a0, s1 + a1, s2);
+        let (t0, t1, t2) = hades_permutation(t0 + a2, t1 + a3, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a4, t1 + a5, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a6, t1 + a7, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a8, t1 + a9, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a10, t1 + a11, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a12, t1 + a13, t2);
+        let (t0, t1, t2) = hades_permutation(t0 + a14, t1 + a15, t2);
+        s0 = t0;
+        s1 = t1;
+        s2 = t2;
+    }
+    let (r, _, _) = hades_permutation(s0 + 1, s1, s2);
+    r
+}
+
+/// Commitment stored by the account: commit(NTT(H)) for a canonical 29-felt public key.
+pub fn public_key_commitment(public_key: Span<felt252>) -> Option<felt252> {
+    if public_key.len() != PUBLIC_KEY_FELTS {
+        return None;
+    }
+    Some(commit128(transformed_public_key(public_key)?.span()))
+}
+
+/// Verifies `signature` (171 felts) on `message_hash` against `commitment`.
+pub fn verify(message_hash: felt252, commitment: felt252, signature: Span<felt252>) -> bool {
     if signature.len() != SIGNATURE_FELTS {
         return false;
     }
-    let ntt_h = match transformed_public_key(public_key) {
+    let mid_state = signature.slice(162, 9);
+    let point = match hash_to_point(message_hash, *signature.at(32), *signature.at(33), mid_state) {
         Some(v) => v,
         None => { return false; },
     };
-    let point = match hash_to_point(message_hash, *signature.at(32), *signature.at(33)) {
-        Some(v) => v,
-        None => { return false; },
-    };
-    verify_core(point.span(), ntt_h.span(), signature.slice(0, 32))
+    verify_core(point.span(), commitment, signature.slice(34, 128), signature.slice(0, 32))
 }
 
-fn verify_core(c: Span<u16>, ntt_h: Span<felt252>, s2_packed: Span<felt252>) -> bool {
+fn verify_core(
+    c: Span<u16>, commit: felt252, ntt_h: Span<felt252>, s2_packed: Span<felt252>,
+) -> bool {
+    if ntt_h.len() != 128 || commit128(ntt_h) != commit {
+        return false;
+    }
     let mut norm: felt252 = 0;
     let sb = match decode_s2_blocks(s2_packed, ref norm) {
         Some(v) => v,

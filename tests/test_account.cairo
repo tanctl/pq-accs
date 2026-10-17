@@ -1,6 +1,7 @@
 use falcon512_account::account::{
     IFalcon512AccountDispatcher, IFalcon512AccountDispatcherTrait, ISRC5_ID, ISRC6_ID,
 };
+use falcon512_account::verifier::public_key_commitment;
 use snforge_std::{
     ContractClassTrait, DeclareResultTrait, declare, start_cheat_signature_global,
     start_cheat_transaction_hash_global,
@@ -16,9 +17,9 @@ fn deploy() -> IFalcon512AccountDispatcher {
 }
 
 #[test]
-fn constructor_stores_public_key_and_interfaces() {
+fn constructor_stores_commitment_and_interfaces() {
     let a = deploy();
-    assert!(a.get_public_key() == fixtures::public_key());
+    assert!(a.get_public_key_commitment() == public_key_commitment(fixtures::public_key().span()).unwrap());
     assert!(a.supports_interface(ISRC5_ID) && a.supports_interface(ISRC6_ID));
     assert!(!a.supports_interface(0x1234));
 }
@@ -48,15 +49,4 @@ fn validate_rejects_bad_signature() {
     start_cheat_transaction_hash_global(msg + 1);
     start_cheat_signature_global(sig.span());
     a.__validate__(array![]);
-}
-
-#[test]
-#[should_panic]
-fn constructor_rejects_non_canonical_key() {
-    let class = declare("Falcon512Account").unwrap().contract_class();
-    let mut pk = fixtures::public_key();
-    let _ = pk.pop_front();
-    let mut calldata: Array<felt252> = array![];
-    pk.serialize(ref calldata);
-    let (_address, _) = class.deploy(@calldata).unwrap();
 }

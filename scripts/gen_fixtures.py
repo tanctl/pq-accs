@@ -112,6 +112,7 @@ def main():
         out.append(felt(f"{name}_salt_a", int.from_bytes(salt[:20], "little")))
         out.append(felt(f"{name}_salt_b", int.from_bytes(salt[20:], "little")))
         out.append(arr(f"{name}_words", words, "u16"))
+        out.append(arr(f"{name}_mid", fs.pack_mid_state(fs.sponge_state(mh, salt, 4))))
 
     # Verifier vectors.
     out.append(arr("public_key", fs.pack_public_key(h)))
@@ -119,48 +120,53 @@ def main():
     out.append(arr("other_public_key", fs.pack_public_key(other_h)))
     cases = []  # (msg, signature felts, expected)
 
-    def add_valid(want_perms: int):
-        # standard signing (uniform salt); keep a signature whose hash-to-point needs want_perms
+    def add_valid(grind: bool, want_perms: int):
         while True:
             mh = random.getrandbits(250)
-            salt, s2 = fs.sign_raw(fpy, sk, mh)
+            salt, s2 = fs.sign_raw(fpy, sk, mh, grind=grind)
             if fs.hash_to_point_words(mh, salt)[1] == want_perms:
                 break
         assert ref_verify(mh, salt, s2)
-        cases.append((mh, fs.encode_signature(salt, s2), True))
+        cases.append((mh, fs.encode_signature(mh, salt, s2, h), True))
         return mh, salt, s2
 
-    base = [add_valid(8) for _ in range(4)] + [add_valid(9) for _ in range(2)]
+    base = [add_valid(True, 8) for _ in range(4)] + [add_valid(False, 9) for _ in range(2)]
     mh, salt, s2 = base[0]
-    # wrong message
+    # wrong message (S4 for the signed message, and S4 recomputed for the wrong one)
     assert not ref_verify(mh + 1, salt, s2)
-    cases.append((mh + 1, fs.encode_signature(salt, s2), False))
+    cases.append((mh + 1, fs.encode_signature(mh, salt, s2, h), False))
+    cases.append((mh + 1, fs.encode_signature(mh + 1, salt, s2, h), False))
     # one s2 coefficient changed
     for pos in (0, 255, 511):
         t = s2[:]
         t[pos] += 1
         assert not ref_verify(mh, salt, t)
-        cases.append((mh, fs.encode_signature(salt, t), False))
+        cases.append((mh, fs.encode_signature(mh, salt, t, h), False))
     # salt changed
     t_salt = bytes([salt[0] ^ 1]) + salt[1:]
     assert not ref_verify(mh, t_salt, s2)
-    cases.append((mh, fs.encode_signature(t_salt, s2), False))
+    cases.append((mh, fs.encode_signature(mh, t_salt, s2, h), False))
     # s2 = 0 and an over-norm s2
     zero = [0] * 512
     assert not ref_verify(mh, salt, zero)
-    cases.append((mh, fs.encode_signature(salt, zero), False))
+    cases.append((mh, fs.encode_signature(mh, salt, zero, h), False))
     big = [260 if i % 2 == 0 else -260 for i in range(512)]
     assert sum(x * x for x in big) > fs.SIG_BOUND_512 and not ref_verify(mh, salt, big)
-    cases.append((mh, fs.encode_signature(salt, big), False))
-    # format-level rejections (no falcon.py counterpart): non-canonical s2 top digit, oversized
-    # salt, wrong length (short and long)
-    sig = fs.encode_signature(salt, s2)
+    cases.append((mh, fs.encode_signature(mh, salt, big, h), False))
+    # format-level rejections (no falcon.py counterpart): carried NTT(H) altered, non-canonical
+    # s2 top digit, oversized salt, S4 altered (a lane, the unused top of the last felt, a felt
+    # >= 2^192), wrong length
+    sig = fs.encode_signature(mh, salt, s2, h)
+    t = sig[:]; t[34 + 7] = (t[34 + 7] + 1) % fs.STARK_P
+    cases.append((mh, t, False))
     t = sig[:]; t[0] += fs.Q**8  # top digit of the first u128 half becomes >= q
     cases.append((mh, t, False))
     t = sig[:]; t[32] += 1 << 160
     cases.append((mh, t, False))
+    for pos, delta in ((162, 1), (162 + 4, 1 << 128), (170, 1 << 64), (163, 1 << 192)):
+        t = sig[:]; t[pos] += delta
+        cases.append((mh, t, False))
     cases.append((mh, sig[:-1], False))
-    cases.append((mh, sig + [0], False))
 
     for i, (m, s, e) in enumerate(cases):
         out.append(felt(f"case_{i}_msg", m))

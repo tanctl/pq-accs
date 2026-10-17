@@ -1,8 +1,8 @@
 // Portions derived from OpenZeppelin cairo-pq-verifiers (MIT License, Copyright (c) 2026 OpenZeppelin).
 //! Falcon-512 account (SNIP-6 / SRC5).
 //!
-//! The constructor checks and stores the canonical 29-felt public key; signatures are the standard
-//! Falcon pair (salt, s2) (see `verifier`). Transaction flow mirrors the
+//! The constructor takes the canonical 29-felt public key and stores only its commitment
+//! commit(NTT(H)); every signature carries NTT(H) (see `verifier`). Transaction flow mirrors the
 //! OpenZeppelin account: `__execute__` only from the protocol, transaction version >= 1, and
 //! `__validate__` / `__validate_declare__` / `__validate_deploy__` verify the transaction hash.
 
@@ -24,7 +24,7 @@ pub trait IFalcon512Account<TState> {
     ) -> felt252;
     fn is_valid_signature(self: @TState, hash: felt252, signature: Array<felt252>) -> felt252;
     fn supports_interface(self: @TState, interface_id: felt252) -> bool;
-    fn get_public_key(self: @TState) -> Array<felt252>;
+    fn get_public_key_commitment(self: @TState) -> felt252;
 }
 
 #[starknet::contract(account)]
@@ -32,9 +32,7 @@ pub mod Falcon512Account {
     use core::num::traits::Zero;
     use starknet::SyscallResultTrait;
     use starknet::account::Call;
-    use starknet::storage::{
-        Map, StorageMapReadAccess, StorageMapWriteAccess,
-    };
+    use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use crate::verifier;
     use super::{ISRC5_ID, ISRC6_ID};
 
@@ -43,20 +41,14 @@ pub mod Falcon512Account {
 
     #[storage]
     struct Storage {
-        public_key: Map<u32, felt252>,
+        public_key_commitment: felt252,
     }
 
     #[constructor]
     fn constructor(ref self: ContractState, public_key: Array<felt252>) {
-        assert(
-            verifier::transformed_public_key(public_key.span()).is_some(),
-            'Falcon: invalid public key',
-        );
-        let mut i: u32 = 0;
-        for x in public_key.span() {
-            self.public_key.write(i, *x);
-            i += 1;
-        }
+        let commitment = verifier::public_key_commitment(public_key.span())
+            .expect('Falcon: invalid public key');
+        self.public_key_commitment.write(commitment);
     }
 
     #[abi(embed_v0)]
@@ -93,7 +85,7 @@ pub mod Falcon512Account {
         fn is_valid_signature(
             self: @ContractState, hash: felt252, signature: Array<felt252>,
         ) -> felt252 {
-            if verifier::verify(hash, self.read_public_key().span(), signature.span()) {
+            if verifier::verify(hash, self.public_key_commitment.read(), signature.span()) {
                 starknet::VALIDATED
             } else {
                 0
@@ -104,27 +96,17 @@ pub mod Falcon512Account {
             interface_id == ISRC5_ID || interface_id == ISRC6_ID
         }
 
-        fn get_public_key(self: @ContractState) -> Array<felt252> {
-            self.read_public_key()
+        fn get_public_key_commitment(self: @ContractState) -> felt252 {
+            self.public_key_commitment.read()
         }
     }
 
     #[generate_trait]
     impl InternalImpl of InternalTrait {
-        fn read_public_key(self: @ContractState) -> Array<felt252> {
-            let mut out: Array<felt252> = array![];
-            let mut i: u32 = 0;
-            while i != verifier::PUBLIC_KEY_FELTS {
-                out.append(self.public_key.read(i));
-                i += 1;
-            }
-            out
-        }
-
         fn validate_transaction(self: @ContractState) -> felt252 {
             let tx_info = starknet::get_tx_info().unbox();
             let valid = verifier::verify(
-                tx_info.transaction_hash, self.read_public_key().span(), tx_info.signature,
+                tx_info.transaction_hash, self.public_key_commitment.read(), tx_info.signature,
             );
             assert(valid, 'Account: invalid signature');
             starknet::VALIDATED
