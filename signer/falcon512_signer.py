@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """Falcon-512 signer for the Starknet Falcon512Account.
 
-Signature (171 felts): s2 (32) || salt (2) || NTT(H) (128) || S4 (9), where (salt, s2) is a
-standard Falcon-512 signature over the 32-byte little-endian transaction hash (SHAKE-256
-hash-to-point of salt || message), NTT(H) is the 128-point Stark-field transform of the public
-key's base-2^32 blocks, and S4 is the SHAKE-256 sponge state after its 4th Keccak-f permutation
-(the verifier recomputes it and runs the two halves of the squeeze side by side). The salt is
-drawn uniformly at random until hash-to-point completes within 8 Keccak permutations (the
-minimum); any standard Falcon verifier accepts (salt, s2).
+Signature (225 felts): s2 (43) || salt (2) || S4 (9) || K (43) || NTT(H) (128), where (salt, s2)
+is a standard Falcon-512 signature over the 32-byte little-endian transaction hash (SHAKE-256
+hash-to-point of salt || message), and the rest is verifier data:
+- S4: the SHAKE-256 sponge state after its 4th Keccak-f permutation (the verifier recomputes it and
+  runs the two halves of the squeeze side by side);
+- K: k_i = (c_i - (s2*h)_i - s1_i) / q for the centered s1, so that s1 = c - s2*h - q*K with no
+  reduction on chain (the verifier range-checks s1; any other K only gives a larger norm);
+- NTT(H): the 128-point Stark-field transform of the public key's base-2^32 blocks.
+s2 and K use 16-bit slots (s2_i + 6144, k_i + 2^15), packed so that bitwise masks yield the
+verifier's base-2^32 blocks directly (`pack_blocks16`). The salt is drawn uniformly at random until
+hash-to-point completes within 8 Keccak permutations (the minimum) and every |k_i| < 2^15; any
+standard Falcon verifier accepts (salt, s2).
 
 Key files use the pq-accounts format (falcon.py secret key, pickled). Requires a falcon.py
 checkout (https://github.com/tprest/falcon.py).
@@ -64,16 +69,53 @@ def pack_public_key(h: list[int]) -> list[int]:
     return out
 
 
-def pack_s2(s2: list[int]) -> list[int]:
-    """32 felts: base-q digits (s2_i + 6144), 8 per u128 half, low half first."""
-    d = [x + 6144 for x in s2]
-    assert all(0 <= v < Q for v in d)
+BLOCK_FELTS = 43
+K_OFF = 1 << 15
+
+
+def pack_blocks16(d: list[int]) -> list[int]:
+    """43 felts from 512 digits in [0, 2^16), as 128 blocks of 4 (block m = d[4m..4m+4]).
+
+    Felt j holds block 3j in the even 16-bit slots of its low 128 bits, block 3j+1 in the odd
+    slots, and block 3j+2 in the even slots of its high part; the last felt holds blocks 126, 127.
+    A block's digit t sits at bit 32t (+16 for odd slots, +128 for the high part)."""
+    assert len(d) == N and all(0 <= v < 1 << 16 for v in d)
+    blk = [sum(d[4 * m + t] << (32 * t) for t in range(4)) for m in range(N // 4)]
     out = []
-    for j in range(0, N, 16):
-        lo = sum(v * Q**t for t, v in enumerate(d[j:j + 8]))
-        hi = sum(v * Q**t for t, v in enumerate(d[j + 8:j + 16]))
-        out.append(lo + (hi << 128))
+    for j in range(BLOCK_FELTS):
+        f = blk[3 * j] + (blk[3 * j + 1] << 16)
+        if 3 * j + 2 < len(blk):
+            f += blk[3 * j + 2] << 128
+        out.append(f)
     return out
+
+
+def pack_s2(s2: list[int]) -> list[int]:
+    return pack_blocks16([x + 6144 for x in s2])
+
+
+def negacyclic(a: list[int], b: list[int]) -> list[int]:
+    r = [0] * N
+    for i, x in enumerate(a):
+        if x:
+            for j, y in enumerate(b):
+                if i + j < N:
+                    r[i + j] += x * y
+                else:
+                    r[i + j - N] -= x * y
+    return r
+
+
+def quotients(message_hash: int, salt: bytes, s2: list[int], h: list[int]) -> list[int] | None:
+    """k with c - s2*h - q*k = s1 (centered); None if some |k_i| >= 2^15 (resample)."""
+    c = hash_to_point_words(message_hash, salt)[0][:N]
+    conv = negacyclic(s2, [centered(x) for x in h])
+    k = []
+    for ci, vi in zip(c, conv):
+        diff = ci - vi
+        r = centered(diff)
+        k.append((diff - r) // Q)
+    return k if all(-K_OFF <= x < K_OFF for x in k) else None
 
 
 def ntt_public_key(h: list[int]) -> list[int]:
@@ -178,14 +220,22 @@ def sign_raw(fpy, sk, message_hash: int, grind: bool = True) -> tuple[bytes, lis
             return salt, [centered(c) for c in s[1]]
 
 
-def encode_signature(message_hash: int, salt: bytes, s2: list[int], h: list[int]) -> list[int]:
+def encode_signature(message_hash: int, salt: bytes, s2: list[int], h: list[int],
+                     k: list[int] | None = None) -> list[int]:
+    if k is None:
+        k = quotients(message_hash, salt, s2, h)
+        assert k is not None, "a quotient is out of range; sign again"
     return (pack_s2(s2) + [int.from_bytes(salt[:20], "little"), int.from_bytes(salt[20:], "little")]
-            + ntt_public_key(h) + pack_mid_state(sponge_state(message_hash, salt, 4)))
+            + pack_mid_state(sponge_state(message_hash, salt, 4))
+            + pack_blocks16([x + K_OFF for x in k]) + ntt_public_key(h))
 
 
 def sign(fpy, sk, h: list[int], message_hash: int) -> list[int]:
-    salt, s2 = sign_raw(fpy, sk, message_hash)
-    return encode_signature(message_hash, salt, s2, h)
+    while True:
+        salt, s2 = sign_raw(fpy, sk, message_hash)
+        k = quotients(message_hash, salt, s2, h)
+        if k is not None:
+            return encode_signature(message_hash, salt, s2, h, k)
 
 
 def keygen(fpy, div_zq, path: Path) -> None:

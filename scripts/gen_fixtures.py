@@ -120,50 +120,65 @@ def main():
     out.append(arr("other_public_key", fs.pack_public_key(other_h)))
     cases = []  # (msg, signature felts, expected)
 
+    def enc(m: int, salt_: bytes, s2_: list[int]) -> list[int]:
+        """Encode with the signer's k, or (for rejection cases where it is out of range) the
+        nearest in-range k, which only makes s1' larger."""
+        k = fs.quotients(m, salt_, s2_, h)
+        if k is None:
+            c = fs.hash_to_point_words(m, salt_)[0][:512]
+            conv = fs.negacyclic(s2_, [fs.centered(x) for x in h])
+            k = [max(-fs.K_OFF, min(fs.K_OFF - 1, (ci - vi - fs.centered(ci - vi)) // fs.Q))
+                 for ci, vi in zip(c, conv)]
+        return fs.encode_signature(m, salt_, s2_, h, k)
+
     def add_valid(grind: bool, want_perms: int):
         while True:
             mh = random.getrandbits(250)
             salt, s2 = fs.sign_raw(fpy, sk, mh, grind=grind)
-            if fs.hash_to_point_words(mh, salt)[1] == want_perms:
+            if fs.hash_to_point_words(mh, salt)[1] == want_perms and fs.quotients(mh, salt, s2, h):
                 break
         assert ref_verify(mh, salt, s2)
-        cases.append((mh, fs.encode_signature(mh, salt, s2, h), True))
+        cases.append((mh, enc(mh, salt, s2), True))
         return mh, salt, s2
 
     base = [add_valid(True, 8) for _ in range(4)] + [add_valid(False, 9) for _ in range(2)]
     mh, salt, s2 = base[0]
     # wrong message (S4 for the signed message, and S4 recomputed for the wrong one)
     assert not ref_verify(mh + 1, salt, s2)
-    cases.append((mh + 1, fs.encode_signature(mh, salt, s2, h), False))
-    cases.append((mh + 1, fs.encode_signature(mh + 1, salt, s2, h), False))
+    cases.append((mh + 1, enc(mh, salt, s2), False))
+    cases.append((mh + 1, enc(mh + 1, salt, s2), False))
     # one s2 coefficient changed
     for pos in (0, 255, 511):
         t = s2[:]
         t[pos] += 1
         assert not ref_verify(mh, salt, t)
-        cases.append((mh, fs.encode_signature(mh, salt, t, h), False))
+        cases.append((mh, enc(mh, salt, t), False))
     # salt changed
     t_salt = bytes([salt[0] ^ 1]) + salt[1:]
     assert not ref_verify(mh, t_salt, s2)
-    cases.append((mh, fs.encode_signature(mh, t_salt, s2, h), False))
+    cases.append((mh, enc(mh, t_salt, s2), False))
     # s2 = 0 and an over-norm s2
     zero = [0] * 512
     assert not ref_verify(mh, salt, zero)
-    cases.append((mh, fs.encode_signature(mh, salt, zero, h), False))
+    cases.append((mh, enc(mh, salt, zero), False))
     big = [260 if i % 2 == 0 else -260 for i in range(512)]
     assert sum(x * x for x in big) > fs.SIG_BOUND_512 and not ref_verify(mh, salt, big)
-    cases.append((mh, fs.encode_signature(mh, salt, big, h), False))
-    # format-level rejections (no falcon.py counterpart): carried NTT(H) altered, non-canonical
-    # s2 top digit, oversized salt, S4 altered (a lane, the unused top of the last felt, a felt
-    # >= 2^192), wrong length
-    sig = fs.encode_signature(mh, salt, s2, h)
-    t = sig[:]; t[34 + 7] = (t[34 + 7] + 1) % fs.STARK_P
-    cases.append((mh, t, False))
-    t = sig[:]; t[0] += fs.Q**8  # top digit of the first u128 half becomes >= q
-    cases.append((mh, t, False))
-    t = sig[:]; t[32] += 1 << 160
-    cases.append((mh, t, False))
-    for pos, delta in ((162, 1), (162 + 4, 1 << 128), (170, 1 << 64), (163, 1 << 192)):
+    cases.append((mh, enc(mh, salt, big), False))
+    # format-level rejections (no falcon.py counterpart). Layout: s2 [0, 43), salt [43, 45),
+    # S4 [45, 54), k [54, 97), NTT(H) [97, 225).
+    sig = enc(mh, salt, s2)
+    tampers = [
+        (97 + 7, 1),            # carried NTT(H) altered
+        (43, 1 << 160),         # oversized salt
+        (45, 1), (45 + 4, 1 << 128), (53, 1 << 64), (46, 1 << 192),  # S4: a lane, top bits
+        (54, 1),                # one k digit + 1: s1' moves by q
+        (54 + 10, 3 << 16),     # a k digit + 3: s1' outside [-2^15, 2^15)
+        (0, 1 << 144),          # s2: a bit in an unused slot of the high part
+        (54, 1 << 144),         # k: a bit in an unused slot of the high part
+        (42, 1 << 128),         # s2: last felt has a high part
+        (96, 1 << 128),         # k: last felt has a high part
+    ]
+    for pos, delta in tampers:
         t = sig[:]; t[pos] += delta
         cases.append((mh, t, False))
     cases.append((mh, sig[:-1], False))

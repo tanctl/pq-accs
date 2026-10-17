@@ -15,261 +15,345 @@
 extern fn bitwise(lhs: u128, rhs: u128) -> (u128, u128, u128) implicits(core::integer::Bitwise) nopanic;
 
 
-/// rotl by 1 of both 64-bit halves.
+/// rotl by 1 of both 64-bit halves; `m` = the top 1 bits of each half.
 #[inline(always)]
-fn rot1(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0x80000000000000008000000000000000);
+fn rot1(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x2 + t.into() * 0x800000000000010efffffffffffffddffffffffffffffffffffffffffffffff;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 2 of both 64-bit halves.
+/// rotl by 2 of both 64-bit halves; `m` = the top 2 bits of each half.
 #[inline(always)]
-fn rot2(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xc000000000000000c000000000000000);
+fn rot2(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x4 + t.into() * 0x800000000000010dfffffffffffffbbfffffffffffffffffffffffffffffffd;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 3 of both 64-bit halves.
+/// rotl by 3 of both 64-bit halves; `m` = the top 3 bits of each half.
 #[inline(always)]
-fn rot3(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xe000000000000000e000000000000000);
+fn rot3(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x8 + t.into() * 0x800000000000010bfffffffffffff77fffffffffffffffffffffffffffffff9;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 6 of both 64-bit halves.
+/// rotl by 6 of both 64-bit halves; `m` = the top 6 bits of each half.
 #[inline(always)]
-fn rot6(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfc00000000000000fc00000000000000);
+fn rot6(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x40 + t.into() * 0x80000000000000efffffffffffffbbfffffffffffffffffffffffffffffffc1;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 8 of both 64-bit halves.
+/// rotl by 8 of both 64-bit halves; `m` = the top 8 bits of each half.
 #[inline(always)]
-fn rot8(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xff00000000000000ff00000000000000);
+fn rot8(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x100 + t.into() * 0x800000000000008ffffffffffffeeffffffffffffffffffffffffffffffff01;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 10 of both 64-bit halves.
+/// rotl by 10 of both 64-bit halves; `m` = the top 10 bits of each half.
 #[inline(always)]
-fn rot10(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffc0000000000000ffc0000000000000);
+fn rot10(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x400 + t.into() * 0x7fffffffffffff0ffffffffffffbbfffffffffffffffffffffffffffffffc01;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 14 of both 64-bit halves.
+/// rotl by 14 of both 64-bit halves; `m` = the top 14 bits of each half.
 #[inline(always)]
-fn rot14(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffc000000000000fffc000000000000);
+fn rot14(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x4000 + t.into() * 0x7fffffffffffe10fffffffffffbbfffffffffffffffffffffffffffffffc001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 15 of both 64-bit halves.
+/// rotl by 15 of both 64-bit halves; `m` = the top 15 bits of each half.
 #[inline(always)]
-fn rot15(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffe000000000000fffe000000000000);
+fn rot15(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x8000 + t.into() * 0x7fffffffffffc10fffffffffff77fffffffffffffffffffffffffffffff8001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 18 of both 64-bit halves.
+/// rotl by 18 of both 64-bit halves; `m` = the top 18 bits of each half.
 #[inline(always)]
-fn rot18(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffc00000000000ffffc00000000000);
+fn rot18(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x40000 + t.into() * 0x7ffffffffffe010ffffffffffbbfffffffffffffffffffffffffffffffc0001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 20 of both 64-bit halves.
+/// rotl by 20 of both 64-bit halves; `m` = the top 20 bits of each half.
 #[inline(always)]
-fn rot20(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffff00000000000fffff00000000000);
+fn rot20(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x100000 + t.into() * 0x7ffffffffff8010fffffffffeeffffffffffffffffffffffffffffffff00001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 21 of both 64-bit halves.
+/// rotl by 21 of both 64-bit halves; `m` = the top 21 bits of each half.
 #[inline(always)]
-fn rot21(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffff80000000000fffff80000000000);
+fn rot21(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x200000 + t.into() * 0x7ffffffffff0010fffffffffddfffffffffffffffffffffffffffffffe00001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 25 of both 64-bit halves.
+/// rotl by 25 of both 64-bit halves; `m` = the top 25 bits of each half.
 #[inline(always)]
-fn rot25(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffff8000000000ffffff8000000000);
+fn rot25(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x2000000 + t.into() * 0x7fffffffff00010ffffffffddfffffffffffffffffffffffffffffffe000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 27 of both 64-bit halves.
+/// rotl by 27 of both 64-bit halves; `m` = the top 27 bits of each half.
 #[inline(always)]
-fn rot27(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffffe000000000ffffffe000000000);
+fn rot27(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x8000000 + t.into() * 0x7ffffffffc00010ffffffff77fffffffffffffffffffffffffffffff8000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 28 of both 64-bit halves.
+/// rotl by 28 of both 64-bit halves; `m` = the top 28 bits of each half.
 #[inline(always)]
-fn rot28(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffff000000000fffffff000000000);
+fn rot28(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x10000000 + t.into() * 0x7ffffffff800010fffffffeeffffffffffffffffffffffffffffffff0000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 36 of both 64-bit halves.
+/// rotl by 36 of both 64-bit halves; `m` = the top 36 bits of each half.
 #[inline(always)]
-fn rot36(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffff0000000fffffffff0000000);
+fn rot36(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x1000000000 + t.into() * 0x7ffffff80000010fffffeeffffffffffffffffffffffffffffffff000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 39 of both 64-bit halves.
+/// rotl by 39 of both 64-bit halves; `m` = the top 39 bits of each half.
 #[inline(always)]
-fn rot39(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffe000000fffffffffe000000);
+fn rot39(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x8000000000 + t.into() * 0x7fffffc00000010fffff77fffffffffffffffffffffffffffffff8000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 41 of both 64-bit halves.
+/// rotl by 41 of both 64-bit halves; `m` = the top 41 bits of each half.
 #[inline(always)]
-fn rot41(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffffffff800000ffffffffff800000);
+fn rot41(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x20000000000 + t.into() * 0x7fffff000000010ffffddfffffffffffffffffffffffffffffffe0000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 43 of both 64-bit halves.
+/// rotl by 43 of both 64-bit halves; `m` = the top 43 bits of each half.
 #[inline(always)]
-fn rot43(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffffffffe00000ffffffffffe00000);
+fn rot43(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x80000000000 + t.into() * 0x7ffffc000000010ffff77fffffffffffffffffffffffffffffff80000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 44 of both 64-bit halves.
+/// rotl by 44 of both 64-bit halves; `m` = the top 44 bits of each half.
 #[inline(always)]
-fn rot44(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffff00000fffffffffff00000);
+fn rot44(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x100000000000 + t.into() * 0x7ffff8000000010fffeeffffffffffffffffffffffffffffffff00000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 45 of both 64-bit halves.
+/// rotl by 45 of both 64-bit halves; `m` = the top 45 bits of each half.
 #[inline(always)]
-fn rot45(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffff80000fffffffffff80000);
+fn rot45(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x200000000000 + t.into() * 0x7ffff0000000010fffddfffffffffffffffffffffffffffffffe00000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 55 of both 64-bit halves.
+/// rotl by 55 of both 64-bit halves; `m` = the top 55 bits of each half.
 #[inline(always)]
-fn rot55(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffffffe00fffffffffffffe00);
+fn rot55(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x80000000000000 + t.into() * 0x7fc000000000010f77fffffffffffffffffffffffffffffff80000000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 56 of both 64-bit halves.
+/// rotl by 56 of both 64-bit halves; `m` = the top 56 bits of each half.
 #[inline(always)]
-fn rot56(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xffffffffffffff00ffffffffffffff00);
+fn rot56(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x100000000000000 + t.into() * 0x7f8000000000010eeffffffffffffffffffffffffffffffff00000000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 61 of both 64-bit halves.
+/// rotl by 61 of both 64-bit halves; `m` = the top 61 bits of each half.
 #[inline(always)]
-fn rot61(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffffffff8fffffffffffffff8);
+fn rot61(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x2000000000000000 + t.into() * 0x70000000000000edfffffffffffffffffffffffffffffffe000000000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
-/// rotl by 62 of both 64-bit halves.
+/// rotl by 62 of both 64-bit halves; `m` = the top 62 bits of each half.
 #[inline(always)]
-fn rot62(x: u128) -> u128 {
-    let (t, _, _) = bitwise(x, 0xfffffffffffffffcfffffffffffffffc);
+fn rot62(x: u128, m: u128) -> u128 {
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * 0x4000000000000000 + t.into() * 0x60000000000000cbfffffffffffffffffffffffffffffffc000000000000001;
-    v.try_into().unwrap()
+    match v.try_into() {
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }
 }
 
 
 /// Keccak-f[1600] of the two states packed in `state` (lane k = a_k + b_k * 2^64).
 pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
+    // Rotation masks and round constants are passed in so that they sit in the callee's frame
+    // (writing a frame cell into a builtin input is one instruction, an immediate takes two);
+    // the 24 rounds run as two calls of one 12-round body.
+    let masks = [0x80000000000000008000000000000000, 0xc000000000000000c000000000000000, 0xe000000000000000e000000000000000, 0xfc00000000000000fc00000000000000, 0xff00000000000000ff00000000000000, 0xffc0000000000000ffc0000000000000, 0xfffc000000000000fffc000000000000, 0xfffe000000000000fffe000000000000, 0xffffc00000000000ffffc00000000000, 0xfffff00000000000fffff00000000000, 0xfffff80000000000fffff80000000000, 0xffffff8000000000ffffff8000000000, 0xffffffe000000000ffffffe000000000, 0xfffffff000000000fffffff000000000, 0xfffffffff0000000fffffffff0000000, 0xfffffffffe000000fffffffffe000000, 0xffffffffff800000ffffffffff800000, 0xffffffffffe00000ffffffffffe00000, 0xfffffffffff00000fffffffffff00000, 0xfffffffffff80000fffffffffff80000, 0xfffffffffffffe00fffffffffffffe00, 0xffffffffffffff00ffffffffffffff00, 0xfffffffffffffff8fffffffffffffff8, 0xfffffffffffffffcfffffffffffffffc];
+    let state = rounds12(state, masks, [0x10000000000000001, 0x80820000000000008082, 0x800000000000808a800000000000808a, 0x80000000800080008000000080008000, 0x808b000000000000808b, 0x800000010000000080000001, 0x80000000800080818000000080008081, 0x80000000000080098000000000008009, 0x8a000000000000008a, 0x880000000000000088, 0x800080090000000080008009, 0x8000000a000000008000000a]);
+    let state = rounds12(state, masks, [0x8000808b000000008000808b, 0x800000000000008b800000000000008b, 0x80000000000080898000000000008089, 0x80000000000080038000000000008003, 0x80000000000080028000000000008002, 0x80000000000000808000000000000080, 0x800a000000000000800a, 0x800000008000000a800000008000000a, 0x80000000800080818000000080008081, 0x80000000000080808000000000008080, 0x800000010000000080000001, 0x80000000800080088000000080008008]);
+    state
+}
+
+fn rounds12(state: [u128; 25], masks: [u128; 24], rc: [u128; 12]) -> [u128; 25] {
     let [s00, s01, s02, s03, s04, s05, s06, s07, s08, s09, s10, s11, s12, s13, s14, s15, s16, s17, s18, s19, s20, s21, s22, s23, s24] = state;
+    let [m1, m2, m3, m6, m8, m10, m14, m15, m18, m20, m21, m25, m27, m28, m36, m39, m41, m43, m44, m45, m55, m56, m61, m62] = masks;
+    let [rc0, rc1, rc2, rc3, rc4, rc5, rc6, rc7, rc8, rc9, rc10, rc11] = rc;
     // round 0
     let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
     let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -295,7 +379,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x10000000000000001;
+    let s00 = x00 ^ o01 ^ rc0;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -326,36 +410,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -381,7 +465,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80820000000000008082;
+    let s00 = x00 ^ o01 ^ rc1;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -412,36 +496,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -467,7 +551,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800000000000808a800000000000808a;
+    let s00 = x00 ^ o01 ^ rc2;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -498,36 +582,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -553,7 +637,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000800080008000000080008000;
+    let s00 = x00 ^ o01 ^ rc3;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -584,36 +668,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -639,7 +723,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x808b000000000000808b;
+    let s00 = x00 ^ o01 ^ rc4;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -670,36 +754,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -725,7 +809,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800000010000000080000001;
+    let s00 = x00 ^ o01 ^ rc5;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -756,36 +840,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -811,7 +895,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000800080818000000080008081;
+    let s00 = x00 ^ o01 ^ rc6;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -842,36 +926,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -897,7 +981,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000080098000000000008009;
+    let s00 = x00 ^ o01 ^ rc7;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -928,36 +1012,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -983,7 +1067,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x8a000000000000008a;
+    let s00 = x00 ^ o01 ^ rc8;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -1014,36 +1098,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -1069,7 +1153,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x880000000000000088;
+    let s00 = x00 ^ o01 ^ rc9;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -1100,36 +1184,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -1155,7 +1239,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800080090000000080008009;
+    let s00 = x00 ^ o01 ^ rc10;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;
@@ -1186,36 +1270,36 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
     let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
     let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
+    let d0 = c4 ^ rot1(c1, m1);
+    let d1 = c0 ^ rot1(c2, m1);
+    let d2 = c1 ^ rot1(c3, m1);
+    let d3 = c2 ^ rot1(c4, m1);
+    let d4 = c3 ^ rot1(c0, m1);
     let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
+    let b01 = rot44(s06 ^ d1, m44);
+    let b02 = rot43(s12 ^ d2, m43);
+    let b03 = rot21(s18 ^ d3, m21);
+    let b04 = rot14(s24 ^ d4, m14);
+    let b05 = rot28(s03 ^ d3, m28);
+    let b06 = rot20(s09 ^ d4, m20);
+    let b07 = rot3(s10 ^ d0, m3);
+    let b08 = rot45(s16 ^ d1, m45);
+    let b09 = rot61(s22 ^ d2, m61);
+    let b10 = rot1(s01 ^ d1, m1);
+    let b11 = rot6(s07 ^ d2, m6);
+    let b12 = rot25(s13 ^ d3, m25);
+    let b13 = rot8(s19 ^ d4, m8);
+    let b14 = rot18(s20 ^ d0, m18);
+    let b15 = rot27(s04 ^ d4, m27);
+    let b16 = rot36(s05 ^ d0, m36);
+    let b17 = rot10(s11 ^ d1, m10);
+    let b18 = rot15(s17 ^ d2, m15);
+    let b19 = rot56(s23 ^ d3, m56);
+    let b20 = rot62(s02 ^ d2, m62);
+    let b21 = rot55(s08 ^ d3, m55);
+    let b22 = rot39(s14 ^ d4, m39);
+    let b23 = rot41(s15 ^ d0, m41);
+    let b24 = rot2(s21 ^ d1, m2);
     let (_, x00, o00) = bitwise(b00, b01);
     let (_, x01, o01) = bitwise(b01, b02);
     let (_, x02, o02) = bitwise(b02, b03);
@@ -1241,1039 +1325,7 @@ pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {
     let (_, x42, o42) = bitwise(b22, b23);
     let (_, x43, o43) = bitwise(b23, b24);
     let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x8000000a000000008000000a;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 12
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x8000808b000000008000808b;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 13
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800000000000008b800000000000008b;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 14
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000080898000000000008089;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 15
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000080038000000000008003;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 16
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000080028000000000008002;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 17
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000000808000000000000080;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 18
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800a000000000000800a;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 19
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800000008000000a800000008000000a;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 20
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000800080818000000080008081;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 21
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000000080808000000000008080;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 22
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x800000010000000080000001;
-    let s01 = x01 ^ o02;
-    let s02 = x02 ^ o03;
-    let s03 = x03 ^ o04;
-    let s04 = x04 ^ o00;
-    let s05 = x10 ^ o11;
-    let s06 = x11 ^ o12;
-    let s07 = x12 ^ o13;
-    let s08 = x13 ^ o14;
-    let s09 = x14 ^ o10;
-    let s10 = x20 ^ o21;
-    let s11 = x21 ^ o22;
-    let s12 = x22 ^ o23;
-    let s13 = x23 ^ o24;
-    let s14 = x24 ^ o20;
-    let s15 = x30 ^ o31;
-    let s16 = x31 ^ o32;
-    let s17 = x32 ^ o33;
-    let s18 = x33 ^ o34;
-    let s19 = x34 ^ o30;
-    let s20 = x40 ^ o41;
-    let s21 = x41 ^ o42;
-    let s22 = x42 ^ o43;
-    let s23 = x43 ^ o44;
-    let s24 = x44 ^ o40;
-    // round 23
-    let c0 = s00 ^ s05 ^ s10 ^ s15 ^ s20;
-    let c1 = s01 ^ s06 ^ s11 ^ s16 ^ s21;
-    let c2 = s02 ^ s07 ^ s12 ^ s17 ^ s22;
-    let c3 = s03 ^ s08 ^ s13 ^ s18 ^ s23;
-    let c4 = s04 ^ s09 ^ s14 ^ s19 ^ s24;
-    let d0 = c4 ^ rot1(c1);
-    let d1 = c0 ^ rot1(c2);
-    let d2 = c1 ^ rot1(c3);
-    let d3 = c2 ^ rot1(c4);
-    let d4 = c3 ^ rot1(c0);
-    let b00 = s00 ^ d0;
-    let b01 = rot44(s06 ^ d1);
-    let b02 = rot43(s12 ^ d2);
-    let b03 = rot21(s18 ^ d3);
-    let b04 = rot14(s24 ^ d4);
-    let b05 = rot28(s03 ^ d3);
-    let b06 = rot20(s09 ^ d4);
-    let b07 = rot3(s10 ^ d0);
-    let b08 = rot45(s16 ^ d1);
-    let b09 = rot61(s22 ^ d2);
-    let b10 = rot1(s01 ^ d1);
-    let b11 = rot6(s07 ^ d2);
-    let b12 = rot25(s13 ^ d3);
-    let b13 = rot8(s19 ^ d4);
-    let b14 = rot18(s20 ^ d0);
-    let b15 = rot27(s04 ^ d4);
-    let b16 = rot36(s05 ^ d0);
-    let b17 = rot10(s11 ^ d1);
-    let b18 = rot15(s17 ^ d2);
-    let b19 = rot56(s23 ^ d3);
-    let b20 = rot62(s02 ^ d2);
-    let b21 = rot55(s08 ^ d3);
-    let b22 = rot39(s14 ^ d4);
-    let b23 = rot41(s15 ^ d0);
-    let b24 = rot2(s21 ^ d1);
-    let (_, x00, o00) = bitwise(b00, b01);
-    let (_, x01, o01) = bitwise(b01, b02);
-    let (_, x02, o02) = bitwise(b02, b03);
-    let (_, x03, o03) = bitwise(b03, b04);
-    let (_, x04, o04) = bitwise(b04, b00);
-    let (_, x10, o10) = bitwise(b05, b06);
-    let (_, x11, o11) = bitwise(b06, b07);
-    let (_, x12, o12) = bitwise(b07, b08);
-    let (_, x13, o13) = bitwise(b08, b09);
-    let (_, x14, o14) = bitwise(b09, b05);
-    let (_, x20, o20) = bitwise(b10, b11);
-    let (_, x21, o21) = bitwise(b11, b12);
-    let (_, x22, o22) = bitwise(b12, b13);
-    let (_, x23, o23) = bitwise(b13, b14);
-    let (_, x24, o24) = bitwise(b14, b10);
-    let (_, x30, o30) = bitwise(b15, b16);
-    let (_, x31, o31) = bitwise(b16, b17);
-    let (_, x32, o32) = bitwise(b17, b18);
-    let (_, x33, o33) = bitwise(b18, b19);
-    let (_, x34, o34) = bitwise(b19, b15);
-    let (_, x40, o40) = bitwise(b20, b21);
-    let (_, x41, o41) = bitwise(b21, b22);
-    let (_, x42, o42) = bitwise(b22, b23);
-    let (_, x43, o43) = bitwise(b23, b24);
-    let (_, x44, o44) = bitwise(b24, b20);
-    let s00 = x00 ^ o01 ^ 0x80000000800080088000000080008008;
+    let s00 = x00 ^ o01 ^ rc11;
     let s01 = x01 ^ o02;
     let s02 = x02 ^ o03;
     let s03 = x03 ^ o04;

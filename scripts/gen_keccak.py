@@ -42,17 +42,22 @@ extern fn bitwise(lhs: u128, rhs: u128) -> (u128, u128, u128) implicits(core::in
 """
 
 
+def mask(r: int) -> int:
+    return (((1 << r) - 1) << (64 - r)) * BOTH
+
+
 def rot_fn(r: int) -> str:
-    t = ((1 << r) - 1) << (64 - r)
-    t *= BOTH
     k2 = (pow(2, -(64 - r), P) - (1 << r)) % P
     return f"""
-/// rotl by {r} of both 64-bit halves.
+/// rotl by {r} of both 64-bit halves; `m` = the top {r} bits of each half.
 #[inline(always)]
-fn rot{r}(x: u128) -> u128 {{
-    let (t, _, _) = bitwise(x, {hex(t)});
+fn rot{r}(x: u128, m: u128) -> u128 {{
+    let (t, _, _) = bitwise(x, m);
     let v: felt252 = x.into() * {hex(1 << r)} + t.into() * {hex(k2)};
-    v.try_into().unwrap()
+    match v.try_into() {{
+        Some(r) => r,
+        None => core::panic_with_felt252(0),
+    }}
 }}
 """
 
@@ -61,19 +66,19 @@ def s(i: int) -> str:
     return f"s{i:02d}"
 
 
-def round_code(rc: int, idx: int) -> str:
+def round_code(rc: str, idx: int) -> str:
     o = [f"    // round {idx}"]
     for x in range(5):
         o.append(f"    let c{x} = " + " ^ ".join(s(x + 5 * y) for y in range(5)) + ";")
     for x in range(5):
-        o.append(f"    let d{x} = c{(x - 1) % 5} ^ rot1(c{(x + 1) % 5});")
+        o.append(f"    let d{x} = c{(x - 1) % 5} ^ rot1(c{(x + 1) % 5}, m1);")
     b = {}
     for x in range(5):
         for y in range(5):
             dst = y + 5 * ((2 * x + 3 * y) % 5)
             r = ROT[x][y]
             term = f"{s(x + 5 * y)} ^ d{x}"
-            b[dst] = f"rot{r}({term})" if r else term
+            b[dst] = f"rot{r}({term}, m{r})" if r else term
     for i in range(25):
         o.append(f"    let b{i:02d} = {b[i]};")
     for y in range(5):
@@ -83,7 +88,7 @@ def round_code(rc: int, idx: int) -> str:
         for x in range(5):
             line = f"    let {s(5 * y + x)} = x{y}{x} ^ o{y}{(x + 1) % 5}"
             if y == 0 and x == 0:
-                line += f" ^ {hex(rc * BOTH)}"
+                line += f" ^ {rc}"
             o.append(line + ";")
     return "\n".join(o)
 
@@ -98,8 +103,21 @@ def main() -> None:
     lanes = ", ".join(s(i) for i in range(25))
     out.append("\n/// Keccak-f[1600] of the two states packed in `state` (lane k = a_k + b_k * 2^64).")
     out.append("pub fn keccak_f1600_x2(state: [u128; 25]) -> [u128; 25] {")
+    out.append("    // Rotation masks and round constants are passed in so that they sit in the callee's frame")
+    out.append("    // (writing a frame cell into a builtin input is one instruction, an immediate takes two);")
+    out.append("    // the 24 rounds run as two calls of one 12-round body.")
+    masks = "[" + ", ".join(hex(mask(r)) for r in rots) + "]"
+    out.append(f"    let masks = {masks};")
+    for half in range(2):
+        rcs = "[" + ", ".join(hex(RC[12 * half + i] * BOTH) for i in range(12)) + "]"
+        out.append(f"    let state = rounds12(state, masks, {rcs});")
+    out.append("    state")
+    out.append("}\n")
+    out.append(f"fn rounds12(state: [u128; 25], masks: [u128; {len(rots)}], rc: [u128; 12]) -> [u128; 25] {{")
     out.append(f"    let [{lanes}] = state;")
-    out += [round_code(rc, i) for i, rc in enumerate(RC)]
+    out.append("    let [" + ", ".join(f"m{r}" for r in rots) + "] = masks;")
+    out.append("    let [" + ", ".join(f"rc{i}" for i in range(12)) + "] = rc;")
+    out += [round_code(f"rc{i}", i) for i in range(12)]
     out.append(f"    [{lanes}]")
     out.append("}\n")
     args.out.write_text("\n".join(out))
